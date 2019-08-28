@@ -1,5 +1,5 @@
 {
-  "name": "@fox-finder/provider-node-fs",
+  "name": "@fox-finder/node-fs-provider",
   "version": "0.1.0",
   "description": "Node fs module provider for @fox-finder",
   "main": "dist/index.js",

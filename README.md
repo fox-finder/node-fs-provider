@@ -1,25 +1,25 @@
 
 # FoxBase
 
-Base modules for [@fox-finder](https://github.com/fox-finder)
+node-fs provider for [@fox-finder](https://github.com/fox-finder)
 
 ## Usage
 
 ```bash
-yarn add @fox-finder/base
+yarn add @fox-finder/node-fs-provider
 ```
 
 ```typescript
 import { IFile, FileProvider, utils } from '@fox-finder/base'
+import { NodeFsProvider } from '@fox-finder/node-fs-provider';
 
-export class MyFileProvider implements FileProvider {
+const nodeFsProvider = new NodeFsProvider();
 
-  listFile(path: string, keyword?: string): Promise<IFile[]> {
-
-  };
-}
+nodeFsProvider.listFile('/Users/mypath/somefiles').then(data => {
+  console.log('\n - list data \n', data);
+});
 ```
 
 ## Acknowledgements
 
-- [unix-permissions](https://github.com/ehmicky/unix-permissions)
+- [fs-extra](https://github.com/jprichardson/node-fs-extra)
