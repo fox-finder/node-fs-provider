@@ -1,3 +1,8 @@
+/**
+ * @file NodeFsProvider
+ * @module NodeFsProvider
+ * @author Surmon <https://github.com/surmon-china>
+ */
 
 import * as fs from 'fs';
 import * as path from 'path';
