@@ -1,5 +1,5 @@
 
-# FoxBase
+# node-fs-provider
 
 node-fs provider for [@fox-finder](https://github.com/fox-finder)
 
