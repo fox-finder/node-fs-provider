@@ -7,9 +7,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as fse from 'fs-extra';
-import { FileType, IFile, IFileStat, FileProvider, FileActionResult, FileActionStatus, utils } from '@fox-finder/base';
+import { FileType, IFile, IFileStat, FoxFileProvider, transformOctalModeToStat, transformStatModeToOctal } from '@fox-finder/base';
 
-export class NodeFsProvider implements FileProvider {
+export class NodeFsProvider implements FoxFileProvider {
 
   private checkAccess(filePath: string, mode: number): boolean {
     try {
@@ -30,7 +30,7 @@ export class NodeFsProvider implements FileProvider {
 
   private getFileStat(fullPath: string): IFile {
     const fileStat = fs.statSync(fullPath);
-    const fileStatMode = utils.transformOctalModeToStat(String(fileStat.mode));
+    const fileStatMode = transformOctalModeToStat(String(fileStat.mode));
     const isDirectory = fileStat.isDirectory();
     return {
       type: isDirectory
@@ -48,16 +48,18 @@ export class NodeFsProvider implements FileProvider {
       readable: this.isReadable(fullPath),
       writeable: this.isWriteable(fullPath),
       unix_mode_stat: fileStatMode,
-      unix_mode_octal: utils.transformStatModeToOctal(fileStatMode),
+      unix_mode_octal: transformStatModeToOctal(fileStatMode),
       uid: String(fileStat.uid),
       gid: String(fileStat.gid),
     };
   }
 
-  makeDir(targetPath: string, octalMode?: number): Promise<FileActionResult> {
-    return fse.ensureDir(targetPath, octalMode).then(() => ({
-      status: FileActionStatus.Success,
-    }));
+  ensureAvailability(): Promise<this> {
+    return Promise.resolve(this);
+  }
+
+  makeDir(targetPath: string, octalMode?: number): Promise<void> {
+    return fse.ensureDir(targetPath, octalMode);
   }
 
   listFile(targetPath: string, keyword?: string): Promise<IFile[]> {
@@ -79,11 +81,9 @@ export class NodeFsProvider implements FileProvider {
     });
   }
 
-  writeFile(targetPath: string, data: Buffer, octalMode?: number): Promise<FileActionResult> {
+  writeFile(targetPath: string, data: Buffer, octalMode?: number): Promise<void> {
     const options = octalMode ? { mode: octalMode } : null;
-    return fse.writeFile(targetPath, data, options).then(() => ({
-      status: FileActionStatus.Success,
-    }));
+    return fse.writeFile(targetPath, data, options);
   }
 
   readFile(targetPath: string): Promise<Buffer> {
@@ -116,40 +116,30 @@ export class NodeFsProvider implements FileProvider {
     });
   }
 
-  copy(srcPath: string, destPath: string): Promise<FileActionResult> {
-    return fse.copy(srcPath, destPath).then(() => ({
-      status: FileActionStatus.Success,
-    }));
+  copy(srcPath: string, destPath: string): Promise<void> {
+    return fse.copy(srcPath, destPath);
   }
 
-  move(srcPath: string, destPath: string): Promise<FileActionResult> {
-    return fse.move(srcPath, destPath).then(() => ({
-      status: FileActionStatus.Success,
-    }));
+  move(srcPath: string, destPath: string): Promise<void> {
+    return fse.move(srcPath, destPath);
   }
 
-  rename(srcPath: string, destPath: string): Promise<FileActionResult> {
+  rename(srcPath: string, destPath: string): Promise<void> {
     return new Promise((resolve, reject) => {
       fs.rename(srcPath, destPath, error => {
-        error
-          ? reject(error)
-          : resolve({ status: FileActionStatus.Success });
+        error ? reject(error) : resolve();
       });
     });
   }
 
-  remove(targetPath: string): Promise<FileActionResult> {
-    return fse.remove(targetPath).then(() => ({
-      status: FileActionStatus.Success,
-    }));
+  remove(targetPath: string) {
+    return fse.remove(targetPath);
   }
 
-  chmod(targetPath: string, mode: number): Promise<FileActionResult> {
+  chmod(targetPath: string, mode: number): Promise<void> {
     return new Promise((resolve, reject) => {
       fs.chmod(targetPath, mode, error => {
-        error
-          ? reject(error)
-          : resolve({ status: FileActionStatus.Success });
+        error ? reject(error) : resolve();
       });
     });
   }
