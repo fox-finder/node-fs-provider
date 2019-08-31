@@ -7,6 +7,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as fse from 'fs-extra';
+import * as getFolderSize from 'get-folder-size';
 import { FileType, IFile, IFileStat, FoxFileProvider, transformOctalModeToStat, transformStatModeToOctal } from '@fox-finder/base';
 
 export class NodeFsProvider implements FoxFileProvider {
@@ -47,10 +48,12 @@ export class NodeFsProvider implements FoxFileProvider {
       create_at: fileStat.birthtimeMs,
       readable: this.isReadable(fullPath),
       writeable: this.isWriteable(fullPath),
-      unix_mode_stat: fileStatMode,
-      unix_mode_octal: transformStatModeToOctal(fileStatMode),
-      uid: String(fileStat.uid),
-      gid: String(fileStat.gid),
+      unix: {
+        mode_stat: fileStatMode,
+        mode_octal: transformStatModeToOctal(fileStatMode),
+        uid: String(fileStat.uid),
+        gid: String(fileStat.gid),
+      },
     };
   }
 
@@ -74,9 +77,11 @@ export class NodeFsProvider implements FoxFileProvider {
           ? filesNames.filter(name => name.includes(keyword))
           : filesNames;
 
-        resolve(filesNames.map(fileName => {
-          return this.getFileStat(path.join(targetPath, fileName));
-        }));
+        resolve(
+          filesNames.map(
+            fileName => this.getFileStat(path.join(targetPath, fileName)),
+          ),
+        );
       });
     });
   }
@@ -95,12 +100,13 @@ export class NodeFsProvider implements FoxFileProvider {
   }
 
   stat(targetPath: string): Promise<IFileStat> {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         const stat: IFileStat = this.getFileStat(targetPath);
         if (stat.type === FileType.Directory) {
           stat.file_count = 0;
           stat.directory_count = 0;
+          stat.total_size = null;
           fs.readdirSync(targetPath).forEach(item => {
             if (fs.statSync(path.join(targetPath, item)).isDirectory()) {
               stat.directory_count ++;
@@ -108,8 +114,13 @@ export class NodeFsProvider implements FoxFileProvider {
               stat.file_count++;
             }
           });
+          getFolderSize(targetPath, (error, size) => {
+            if (!error) {
+              stat.total_size = size;
+            }
+            resolve(stat);
+          });
         }
-        resolve(stat);
       } catch (error) {
         reject(error);
       }

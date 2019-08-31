@@ -21,6 +21,7 @@
   "dependencies": {
     "@types/fs-extra": "^8.0.0",
     "fs-extra": "^8.1.0",
+    "get-folder-size": "^2.0.1",
     "typescript": "^3.5.3"
   },
   "devDependencies": {
